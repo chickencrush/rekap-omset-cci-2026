@@ -127,6 +127,16 @@ html.lenis,html.lenis body{height:auto}
 .card:not(.sk):hover{border-color:var(--ac)}
 .rk-h{font-weight:700;margin:16px 0 4px}
 .rk-h:first-child{margin-top:0}
+
+.card:not(.sk):hover{border-color:var(--ac);box-shadow:0 18px 48px rgba(11,122,138,.2),inset 0 1px 0 var(--hi)}
+.kpi,.ins li,.ib{transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s,border-color .3s,background-color .3s;will-change:transform}
+.kpi:hover{transform:scale(1.015)}
+.ins li:hover{transform:scale(1.012);background:var(--gl)}
+.ib:hover{transform:scale(1.1)}
+.ib:active{transform:scale(.94)}
+td{transition:background-color .2s}
+.hl{transition:opacity .15s}
+.bar i{transition:width .5s cubic-bezier(.22,1,.36,1)}
 </style>
 </head>
 <body>
@@ -241,22 +251,17 @@ const chan = rs => K.map((_, i) => sum(rs.map(x => x.v[i])));
 
 /* ---------- gerak ---------- */
 const M = window.Motion, REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches, MOTION = !!M && !REDUCE;
-let revealed = false, unhover = [];
+let revealed = false;
 function reveal() {
   if (revealed || !MOTION) return;
   revealed = true;
   document.querySelectorAll('.card:not(.sk)').forEach((c, i) => {
     c.style.opacity = 0;
-    M.inView(c, () => { M.animate(c, { opacity: [0, 1], y: [28, 0] }, { duration: .7, delay: (i % 4) * .07, ease: [.22, 1, .36, 1] }); }, { amount: .1 });
+    M.inView(c, () => {
+      M.animate(c, { opacity: [0, 1], y: [28, 0] }, { duration: .7, delay: (i % 4) * .07, ease: [.22, 1, .36, 1] })
+        .finished.then(() => { c.style.opacity = ''; c.style.transform = ''; });
+    }, { amount: .1 });
   });
-}
-function bindHover() {
-  if (!MOTION) return;
-  unhover.forEach(f => f());
-  unhover = [
-    M.hover('.card:not(.sk)', el => { M.animate(el, { y: -3 }, { duration: .25 }); return () => M.animate(el, { y: 0 }, { duration: .3 }); }),
-    M.hover('.ib', el => { M.animate(el, { scale: 1.1 }, { duration: .2 }); return () => M.animate(el, { scale: 1 }, { duration: .25 }); })
-  ];
 }
 function pop(root) {
   if (MOTION) M.animate(`${root} tbody tr, ${root} .list li`, { opacity: [0, 1], y: [10, 0] }, { duration: .4, delay: M.stagger(.025) });
@@ -323,7 +328,7 @@ function render() {
     return;
   }
   banner(); kpi(); pm(); kat(); rank(); cmp(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
-  reveal(); bindHover();
+  reveal();
 }
 
 function banner() {
