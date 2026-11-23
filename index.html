@@ -31,7 +31,6 @@ h2{font-size:17px;font-weight:700;margin:0}
 select,button{font:inherit;color:var(--tx);background:var(--gl);border:1px solid var(--bd);border-radius:12px;padding:7px 12px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 select{box-shadow:inset 0 0 0 1px var(--tr)}
 button{cursor:pointer;box-shadow:inset 0 0 0 1px var(--tr)}
-button:hover,select:hover{border-color:var(--ac)}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .seg{display:inline-flex;border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--tr)}
 .seg button{border:0;border-radius:0;box-shadow:none}
@@ -109,7 +108,6 @@ body.loading #refresh .ico{animation:spin .8s linear infinite}
 .bar i{background:linear-gradient(90deg,var(--ac),var(--ac2))}
 .rk{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:700;background:var(--tr)}
 .rk.r1,.rk.r2,.rk.r3{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
-tbody tr:hover td{background:var(--tr)}
 .donut{width:220px;height:220px}
 .sl{cursor:pointer;transition:stroke-width .2s,opacity .2s}
 .sl.on{stroke-width:30}
@@ -123,18 +121,10 @@ tr[data-i].on td{background:var(--tr)}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto!important}
 .lenis.lenis-stopped{overflow:hidden}
-.card{transition:box-shadow .3s,border-color .3s}
-.card:not(.sk):hover{border-color:var(--ac)}
 .rk-h{font-weight:700;margin:16px 0 4px}
 .rk-h:first-child{margin-top:0}
 
 .card:not(.sk):hover{border-color:var(--ac);box-shadow:0 18px 48px rgba(11,122,138,.2),inset 0 1px 0 var(--hi)}
-.kpi,.ins li,.ib{transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s,border-color .3s,background-color .3s;will-change:transform}
-.kpi:hover{transform:scale(1.015)}
-.ins li:hover{transform:scale(1.012);background:var(--gl)}
-.ib:hover{transform:scale(1.1)}
-.ib:active{transform:scale(.94)}
-td{transition:background-color .2s}
 .hl{transition:opacity .15s}
 .bar i{transition:width .5s cubic-bezier(.22,1,.36,1)}
 </style>
@@ -174,6 +164,13 @@ td{transition:background-color .2s}
   <div id="rank"></div>
 </section>
 
+<section class="card mb">
+  <div class="sec-h"><h2>Perbandingan per outlet</h2><div class="tools">
+    <select id="selOc" aria-label="Kelompok outlet"><option value="ALL">Semua</option><option value="PUSAT">Pusat</option><option value="MITRA">Mitra</option></select>
+    <select id="selOs" aria-label="Urutan"><option value="omset">Urut omset</option><option value="pct">Urut selisih %</option></select></div></div>
+  <div id="oc"></div>
+</section>
+
 <div class="grid g2">
   <section class="card">
     <div class="sec-h"><h2>Bulan berjalan dan bulan sebelumnya</h2>
@@ -182,7 +179,9 @@ td{transition:background-color .2s}
   </section>
   <section class="card">
     <div class="sec-h"><h2>Menu tertinggi dan terendah</h2>
-      <div class="seg" role="group" aria-label="Urutkan menu"><button type="button" data-m="qty" class="on">Qty</button><button type="button" data-m="val">Nilai</button></div></div>
+      <div class="tools"><select id="selMW" aria-label="Wilayah"></select>
+      <select id="selMK" aria-label="Kategori menu"><option>Makanan</option><option>Minuman</option></select>
+      <div class="seg" role="group" aria-label="Urutkan menu"><button type="button" data-m="qty" class="on">Qty</button><button type="button" data-m="val">Nilai</button></div></div></div>
     <div id="menu"></div>
   </section>
 </div>
@@ -214,7 +213,7 @@ const MON = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Ag
 const sign = x => (x > 0 ? '+' : '') + pf(x);
 
 let D = null, raw = '';
-const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty' };
+const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan' };
 
 /* ---------- data ---------- */
 function prep(r) {
@@ -324,10 +323,10 @@ function render() {
   $('#periode').textContent = `${MON[d.M - 1]} ${d.Y}` + (d.N ? ` · data sampai tanggal ${d.N}` : ' · belum ada data');
   if (!d.rows.length) {
     $('#banner').innerHTML = '<div class="banner"><b>Belum ada data omset</b> untuk bulan laporan ini. Isi sheet INPUT OMSET.</div>';
-    ['#kpi', '#pm', '#daily', '#kat', '#rank', '#cmp', '#menu', '#ins'].forEach(s => { $(s).innerHTML = ''; });
+    ['#kpi', '#pm', '#daily', '#kat', '#rank', '#oc', '#cmp', '#menu', '#ins'].forEach(s => { $(s).innerHTML = ''; });
     return;
   }
-  banner(); kpi(); pm(); kat(); rank(); cmp(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
+  banner(); kpi(); pm(); kat(); rank(); oc(); cmp(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
   reveal();
 }
 
@@ -456,20 +455,44 @@ function cmp() {
   ${c.mode === 'est' ? `<div class="sub" style="margin-top:8px">Estimasi dari omset total bulan lalu ${rp(c.base)} ÷ ${D.pdim} hari × ${D.C} hari. Untuk perbandingan per kategori, arsipkan data bulan lalu.</div>` : ''}${rows}`;
 }
 
+function oc() {
+  const rows = grp(D.os, S.oc).filter(o => o.dd > 0).map(o => {
+    const pr = D.arsip.filter(x => x.o === o.n && x.day <= o.last);
+    let prev = null, basis = '';
+    if (pr.length) { prev = sum(pr.map(x => x.t)); basis = 'Arsip'; }
+    else if (o.prev > 0) { prev = o.prev / D.pdim * o.last; basis = 'Estimasi'; }
+    return { o, prev, basis, diff: prev === null ? null : o.t - prev, pct: prev ? share(o.t - prev, prev) : null };
+  });
+  rows.sort(S.os === 'pct' ? (a, b) => (b.pct ?? -1e9) - (a.pct ?? -1e9) : (a, b) => b.o.t - a.o.t);
+  if (!rows.length) { $('#oc').innerHTML = '<div class="empty">Belum ada outlet dengan data pada kelompok ini.</div>'; return; }
+  const ok = rows.filter(r => r.pct !== null), up = ok.filter(r => r.pct >= 0).length;
+  const est = rows.some(r => r.basis === 'Estimasi');
+  $('#oc').innerHTML = `<div class="sub" style="margin-bottom:8px">${up} outlet naik, ${ok.length - up} turun, ${rows.length - ok.length} belum punya pembanding bulan lalu. Rentang dibandingkan: tanggal 1 sampai tanggal input terakhir tiap outlet.</div>
+  <div class="scroll"><table><thead><tr><th class="t">Outlet</th><th>Data sampai</th><th>Bulan ini</th><th>Bulan lalu (periode sama)</th><th>Selisih</th><th>Selisih %</th><th>Dasar</th></tr></thead><tbody>${rows.map(r => `<tr><td class="t">${esc(r.o.n)} <span class="tag">${r.o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${r.o.last} ${MON[D.M - 1].slice(0, 3)}</td><td>${rp(r.o.t)}</td><td>${r.prev === null ? '–' : rp(r.prev)}</td><td>${r.diff === null ? '–' : `<span class="${r.diff >= 0 ? 'up' : 'dn'}">${r.diff >= 0 ? '+' : '-'}${rp(Math.abs(r.diff))}</span>`}</td><td>${r.pct === null ? '–' : arrow(r.pct)}</td><td class="mut">${r.basis || '–'}</td></tr>`).join('')}</tbody></table></div>
+  <div class="sub" style="margin-top:8px">${est ? 'Estimasi = omset bulan lalu ÷ jumlah hari bulan lalu × jumlah hari data. ' : ''}${ok.length < rows.length ? 'Isi OMSET BLN LALU (kolom AJ di INPUT OMSET) atau arsipkan bulan lalu agar semua outlet punya pembanding.' : ''}</div>`;
+  pop('#oc');
+}
+
 function menu() {
-  const m = D.menu;
   document.querySelectorAll('[data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === S.menu));
-  let top, bot;
-  if (m.mode === 'full') {
-    const k = S.menu === 'qty' ? 1 : 2, s = m.rows.slice().sort((a, b) => b[k] - a[k]);
-    top = s.slice(0, 5); bot = s.slice(-5).reverse();
-  } else if (m.top.length || m.bottom.length) {
-    if (S.menu === 'val') { $('#menu').innerHTML = '<div class="empty">Peringkat berdasarkan nilai butuh daftar menu lengkap. Isi tab DATA MENU (menu, qty, nilai).</div>'; return; }
-    top = m.top; bot = m.bottom;
-  } else { $('#menu').innerHTML = '<div class="empty">Data menu belum diisi. Isi tab PERFORMA MENU atau DATA MENU pada spreadsheet.</div>'; return; }
-  const val = x => S.menu === 'qty' ? x[1].toLocaleString('id-ID') + ' porsi' : rp(x[2]);
-  const li = a => a.map((x, i) => `<li><span>${i + 1}. ${esc(x[0])}</span><b>${val(x)}</b></li>`).join('');
-  $('#menu').innerHTML = `<div class="two"><div><div class="mut" style="margin-bottom:4px">5 tertinggi</div><ul class="list">${li(top)}</ul></div><div><div class="mut" style="margin-bottom:4px">5 terendah</div><ul class="list">${li(bot)}</ul></div></div>`;
+  const MN = D.menu || [], ws = [...new Set(MN.map(r => r[0]))], sel = $('#selMW');
+  if (!ws.length) {
+    sel.innerHTML = '';
+    $('#menu').innerHTML = '<div class="empty">Data menu belum diisi. Isi tab MENU WILAYAH pada spreadsheet (jalankan siapkanMenuWilayah bila tab belum ada).</div>';
+    return;
+  }
+  if (!ws.includes(S.mw)) S.mw = ws[0];
+  sel.innerHTML = ws.map(w => `<option${w === S.mw ? ' selected' : ''}>${esc(w)}</option>`).join('');
+  $('#selMK').value = S.mk;
+  const rs = MN.filter(r => r[0] === S.mw && r[1] === S.mk).sort((a, b) => a[2] - b[2]);
+  const g = S.menu === 'qty' ? [3, 4] : [5, 6];
+  const pick = i => rs.map(r => r[i]).filter(Boolean);
+  const li = a => a.map((x, i) => `<li><span>${i + 1}. ${esc(x[0])}</span><span style="text-align:right"><b>${S.menu === 'qty' ? x[1].toLocaleString('id-ID') + ' porsi' : rp(x[2])}</b><br><span class="mut" style="font-size:12.5px">${S.menu === 'qty' ? rp(x[2]) : x[1].toLocaleString('id-ID') + ' porsi'}</span></span></li>`).join('');
+  const top = pick(g[0]), bot = pick(g[1]);
+  $('#menu').innerHTML = top.length || bot.length
+    ? `<div class="two"><div><div class="mut" style="margin-bottom:4px">5 tertinggi</div><ul class="list">${li(top)}</ul></div><div><div class="mut" style="margin-bottom:4px">5 terendah</div><ul class="list">${li(bot)}</ul></div></div>`
+    : `<div class="empty">Belum ada data ${S.mk.toLowerCase()} untuk ${esc(S.mw)} pada urutan ini.</div>`;
+  pop('#menu');
 }
 
 function analisa() {
@@ -555,6 +578,10 @@ $('#refresh').onclick = load;
 $('#selKat').onchange = e => { S.kat = e.target.value; if (D) kat(); };
 $('#selRank').onchange = e => { S.rank = e.target.value; if (D) rank(); };
 $('#selCmp').onchange = e => { S.cmp = e.target.value; if (D) cmp(); };
+$('#selOc').onchange = e => { S.oc = e.target.value; if (D) oc(); };
+$('#selOs').onchange = e => { S.os = e.target.value; if (D) oc(); };
+$('#selMW').onchange = e => { S.mw = e.target.value; if (D) menu(); };
+$('#selMK').onchange = e => { S.mk = e.target.value; if (D) menu(); };
 document.querySelectorAll('[data-m]').forEach(b => { b.onclick = () => { S.menu = b.dataset.m; if (D) menu(); }; });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
