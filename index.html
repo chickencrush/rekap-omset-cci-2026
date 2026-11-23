@@ -75,38 +75,81 @@ tr:last-child td{border-bottom:0}
 .stat.err i{background:var(--bad)}
 svg text{font-family:inherit}
 @media(prefers-reduced-motion:no-preference){.bar i,.split i{transition:width .4s ease}}
+
+:root{--hi:rgba(255,255,255,.65)}
+[data-theme=dark]{--hi:rgba(255,255,255,.07)}
+.card{border-radius:26px;padding:20px;box-shadow:var(--sh),inset 0 1px 0 var(--hi)}
+.top{position:sticky;top:8px;z-index:20;margin-bottom:16px;padding:10px 16px;border-radius:24px;background:var(--gl);-webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);border:1px solid var(--bd);box-shadow:var(--sh),inset 0 1px 0 var(--hi)}
+select{border-radius:99px;padding:7px 14px}
+.seg{border-radius:99px}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ib{width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:50%}
+#prog{position:fixed;left:0;top:0;height:3px;width:100%;z-index:50;opacity:0;pointer-events:none;background:linear-gradient(90deg,transparent,var(--ac),var(--ac2),transparent) no-repeat;background-size:45% 100%;animation:slide 1.1s linear infinite}
+body.loading #prog{opacity:1}
+body.loading #refresh .ico{animation:spin .8s linear infinite}
+@keyframes slide{from{background-position:-60% 0}to{background-position:160% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sk{min-height:130px;background:linear-gradient(100deg,var(--gl) 30%,var(--tr) 50%,var(--gl) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+@keyframes shim{to{background-position:-200% 0}}
+.kpi{position:relative;overflow:hidden;padding-bottom:50px}
+.kpi .v{font-size:27px}
+.spark{position:absolute;left:0;right:0;bottom:0;width:100%;height:38px}
+.kpi .bar{position:absolute;left:20px;right:20px;bottom:18px}
+.mb{margin-bottom:14px}
+.ov{display:grid;grid-template-columns:minmax(260px,1fr) 2fr;gap:26px}
+@media(max-width:860px){.ov{grid-template-columns:1fr}}
+.chart{width:100%;height:100%;min-height:280px;display:block}
+.ax{stroke:var(--tr);stroke-width:1}
+.hl{fill:var(--tr);opacity:0}.hl.on{opacity:1}
+.hit{fill:transparent;cursor:pointer}
+.dd{margin-top:16px;padding:14px 16px;border-radius:18px;background:var(--tr)}
+.dd-h{font-weight:600;color:var(--mu);font-size:13px}
+.dd-v{font-size:22px;font-weight:800;margin:2px 0 6px}
+.ins{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.bar i{background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.rk{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:700;background:var(--tr)}
+.rk.r1,.rk.r2,.rk.r3{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+tbody tr:hover td{background:var(--tr)}
+.donut{width:220px;height:220px}
+.sl{cursor:pointer;transition:stroke-width .2s,opacity .2s}
+.sl.on{stroke-width:30}
+[data-i].off{opacity:.35}
+tr[data-i]{cursor:pointer}
+tr[data-i].on td{background:var(--tr)}
+.dc3{font-size:12px;fill:var(--mu)}
+#tip{position:fixed;z-index:60;pointer-events:none;padding:8px 12px;border-radius:12px;font-size:13px;background:var(--tx);color:var(--bg);box-shadow:var(--sh)}
+#tip[hidden]{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header>
+<div id="prog"></div>
+<header class="top">
   <div>
     <h1>Omset Chicken Crush Indonesia</h1>
     <div class="sub" id="periode">Memuat data…</div>
   </div>
   <div class="tools">
     <span class="stat" id="stat"><i></i><span>Menghubungkan…</span></span>
-    <button id="refresh" type="button">Muat ulang</button>
-    <button id="theme" type="button" aria-label="Ganti tema">Mode gelap</button>
+    <button id="refresh" class="ib" type="button" aria-label="Muat ulang data" title="Muat ulang"><svg class="ico" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
+    <button id="theme" class="ib" type="button" aria-label="Ganti tema"><svg class="ico" viewBox="0 0 24 24"></svg></button>
   </div>
 </header>
 
 <div id="banner"></div>
-<div class="grid g4" id="kpi"></div>
+<div class="grid g4" id="kpi"><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div></div>
 
-<div class="grid g21">
-  <section class="card">
-    <div class="sec-h"><h2>Omset Pusat dan Mitra</h2></div>
-    <div id="pm"></div>
-    <div id="daily"></div>
-  </section>
-  <section class="card">
-    <div class="sec-h"><h2>Analisa otomatis</h2></div>
-    <ul class="ins" id="ins"></ul>
-  </section>
-</div>
+<section class="card mb">
+  <div class="sec-h"><h2>Omset Pusat dan Mitra</h2><span class="sub">Arahkan atau ketuk batang untuk melihat detail harian</span></div>
+  <div class="ov"><div id="pm"></div><div id="daily"></div></div>
+</section>
 
-<section class="card grid-item" style="margin-bottom:14px">
+<section class="card mb">
+  <div class="sec-h"><h2>Analisa otomatis</h2></div>
+  <ul class="ins" id="ins"></ul>
+</section>
+
+<section class="card" style="margin-bottom:14px">
   <div class="sec-h"><h2>Penjualan per kategori</h2>
     <select id="selKat" aria-label="Kelompok outlet"><option value="ALL">Semua outlet</option><option value="PUSAT">Pusat</option><option value="MITRA">Mitra</option></select></div>
   <div id="kat"></div>
@@ -132,8 +175,9 @@ svg text{font-family:inherit}
 </div>
 </div>
 
+<div id="tip" hidden></div>
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxQ1MAD0eQ3PHosbEjW_k1F6zImJQKwtNJVTKPuqOVKMYSZguxFgFUMqd3WpIaBgZCE/exec';
+const API_URL = 'GANTI_DENGAN_URL_WEB_APP';
 const TOKEN = '';
 const REFRESH_MS = 60000;
 
@@ -187,16 +231,48 @@ const grp = (list, j) => j === 'ALL' ? list : list.filter(x => x.j === j);
 const chan = rs => K.map((_, i) => sum(rs.map(x => x.v[i])));
 
 /* ---------- komponen ---------- */
-function donut(items, center) {
+function tip(e, html) {
+  const t = $('#tip');
+  if (!e) { t.hidden = true; return; }
+  t.innerHTML = html; t.hidden = false;
+  t.style.left = Math.max(8, Math.min(e.clientX + 14, innerWidth - t.offsetWidth - 8)) + 'px';
+  t.style.top = Math.max(8, e.clientY - 48) + 'px';
+}
+function donut(items, label) {
   const R = 68, Cc = 2 * Math.PI * R, tot = sum(items.map(i => i.v));
   let off = 0;
-  const arcs = items.filter(i => i.v > 0).map(i => {
+  const arcs = items.map((i, n) => {
+    if (i.v <= 0) return '';
     const l = i.v / tot * Cc;
-    const s = `<circle r="${R}" cx="90" cy="90" fill="none" stroke="${i.c}" stroke-width="26" stroke-dasharray="${l} ${Cc - l}" stroke-dashoffset="${-off}" transform="rotate(-90 90 90)"><title>${esc(i.l)}: ${rp(i.v)} (${pf(share(i.v, tot))})</title></circle>`;
+    const c = `<circle class="sl" data-i="${n}" tabindex="0" r="${R}" cx="90" cy="90" fill="none" stroke="${i.c}" stroke-width="24" stroke-dasharray="${l} ${Cc - l}" stroke-dashoffset="${-off}" transform="rotate(-90 90 90)"/>`;
     off += l;
-    return s;
+    return c;
   }).join('');
-  return `<svg viewBox="0 0 180 180" class="donut" role="img" aria-label="${esc(center[0])}"><circle r="${R}" cx="90" cy="90" fill="none" stroke="var(--tr)" stroke-width="26"/>${arcs}<text x="90" y="88" text-anchor="middle" class="dc1">${esc(center[0])}</text><text x="90" y="108" text-anchor="middle" class="dc2">${esc(center[1])}</text></svg>`;
+  return `<svg viewBox="0 0 180 180" class="donut" role="img" aria-label="${esc(label)}"><circle r="${R}" cx="90" cy="90" fill="none" stroke="var(--tr)" stroke-width="24"/>${arcs}<text x="90" y="82" text-anchor="middle" class="dc1"></text><text x="90" y="102" text-anchor="middle" class="dc2"></text><text x="90" y="120" text-anchor="middle" class="dc3"></text></svg>`;
+}
+function bindDonut(root, items, dflt) {
+  const el = $(root), tot = sum(items.map(i => i.v));
+  let pin = -1;
+  const set = i => {
+    const it = items[i];
+    el.querySelector('.dc1').textContent = it ? it.l : dflt[0];
+    el.querySelector('.dc2').textContent = it ? jt(it.v) : dflt[1];
+    el.querySelector('.dc3').textContent = it ? pf(share(it.v, tot)) : '';
+    el.querySelectorAll('[data-i]').forEach(n => {
+      const on = +n.dataset.i === i;
+      n.classList.toggle('on', on);
+      n.classList.toggle('off', i >= 0 && !on);
+    });
+  };
+  el.querySelectorAll('[data-i]').forEach(n => {
+    const i = +n.dataset.i, it = items[i];
+    n.onmouseenter = n.onfocus = () => set(i);
+    n.onmouseleave = n.onblur = () => { set(pin); tip(null); };
+    n.onclick = () => { pin = pin === i ? -1 : i; set(pin); };
+    n.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); n.onclick(); } };
+    if (n.tagName === 'circle') n.onpointermove = e => tip(e, `<b>${esc(it.l)}</b><br>${rp(it.v)} · ${pf(share(it.v, tot))}`);
+  });
+  set(-1);
 }
 const arrow = x => `<span class="${x >= 0 ? 'up' : 'dn'}">${x >= 0 ? '▲' : '▼'} ${sign(x)}</span>`;
 
@@ -218,17 +294,30 @@ function banner() {
     ? `<div class="banner"><b>Data belum lengkap.</b> ${none.length} outlet belum punya data sama sekali dan ${lag.length} outlet datanya belum sampai tanggal ${D.N}. Total omset dan perbandingan bulan lalu bisa lebih rendah dari kondisi sebenarnya.</div>` : '';
 }
 
+const spark = (a, c) => {
+  if (a.length < 2) return '';
+  const mx = Math.max(...a, 1), w = 100, h = 34;
+  const pts = a.map((v, i) => `${i / (a.length - 1) * w},${h - v / mx * (h - 4) - 1}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,${h} ${pts} ${w},${h}" fill="${c}" opacity=".18"/><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>`;
+};
+const series = j => Array.from({ length: D.N }, (_, i) => sum(grp(D.rows, j).filter(x => x.day === i + 1).map(x => x.t)));
 function kpi() {
   const p = sum(grp(D.os, 'PUSAT').map(o => o.t)), m = sum(grp(D.os, 'MITRA').map(o => o.t));
   const avg = D.N ? D.total / D.N : 0;
   const nP = grp(D.os, 'PUSAT').length, nM = grp(D.os, 'MITRA').length;
   const c = [
-    ['Total omset', rp(D.total), `Rata-rata ${rp(avg)} per hari`],
-    ['Omset pusat', rp(p), `${pf(share(p, D.total))} dari total · ${nP} outlet`],
-    ['Omset mitra', rp(m), `${pf(share(m, D.total))} dari total · ${nM} outlet`],
-    ['Proyeksi akhir bulan', rp(avg * D.dim), `Rata-rata per hari × ${D.dim} hari`]
+    ['Total omset', rp(D.total), `Rata-rata ${rp(avg)} per hari`, spark(series('ALL'), 'var(--ac)')],
+    ['Omset pusat', rp(p), `${pf(share(p, D.total))} dari total · ${nP} outlet`, spark(series('PUSAT'), 'var(--ac)')],
+    ['Omset mitra', rp(m), `${pf(share(m, D.total))} dari total · ${nM} outlet`, spark(series('MITRA'), 'var(--ac2)')],
+    ['Proyeksi akhir bulan', rp(avg * D.dim), `Rata-rata per hari × ${D.dim} hari · hari ke-${D.N}`, `<div class="bar" title="Hari berjalan"><i style="width:${share(D.N, D.dim)}%"></i></div>`]
   ];
-  $('#kpi').innerHTML = c.map(x => `<div class="card kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
+  $('#kpi').innerHTML = c.map(x => `<div class="card kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div>${x[3]}</div>`).join('');
+}
+
+function dayDetail(x) {
+  const t = x.p + x.m, dn = `${x.i} ${MON[D.M - 1]} ${D.Y}`;
+  if (!t) return `<div class="dd-h">${dn}</div><div class="mut">Belum ada data omset.</div>`;
+  return `<div class="dd-h">${dn}${x.i > D.C ? ' <span class="tag">data belum lengkap</span>' : ''}</div><div class="dd-v">${rp(t)}</div><ul class="list"><li><span><span class="dot" style="background:var(--ac)"></span>Pusat</span><b>${rp(x.p)}</b></li><li><span><span class="dot" style="background:var(--ac2)"></span>Mitra</span><b>${rp(x.m)}</b></li><li><span>Outlet yang input</span><b>${x.n}</b></li>${x.top ? `<li><span>Tertinggi</span><b>${esc(x.top.o)}</b></li>` : ''}</ul>`;
 }
 
 function pm() {
@@ -236,29 +325,53 @@ function pm() {
   const days = [];
   for (let i = 1; i <= D.dim; i++) {
     const rs = D.rows.filter(x => x.day === i);
-    days.push({ i, p: sum(rs.filter(x => x.j === 'PUSAT').map(x => x.t)), m: sum(rs.filter(x => x.j === 'MITRA').map(x => x.t)) });
+    days.push({
+      i, n: new Set(rs.map(x => x.o)).size, top: rs.slice().sort((a, b) => b.t - a.t)[0],
+      p: sum(rs.filter(x => x.j === 'PUSAT').map(x => x.t)), m: sum(rs.filter(x => x.j === 'MITRA').map(x => x.t))
+    });
   }
-  const mx = Math.max(...days.map(x => x.p + x.m), 1), W = 640, H = 190, bw = W / D.dim;
-  const bars = days.map(x => {
-    const hm = x.m / mx * (H - 24), hp = x.p / mx * (H - 24), cut = x.i > D.C ? .4 : 1, X = (x.i - 1) * bw + 2;
-    return `<g opacity="${cut}"><rect x="${X}" y="${H - hm - hp}" width="${bw - 4}" height="${hm}" rx="2" fill="var(--ac2)"/><rect x="${X}" y="${H - hp}" width="${bw - 4}" height="${hp}" rx="2" fill="var(--ac)"/><rect x="${X - 1}" y="0" width="${bw - 2}" height="${H}" fill="transparent"><title>Tanggal ${x.i}: ${rp(x.p + x.m)} (pusat ${rp(x.p)}, mitra ${rp(x.m)})</title></rect></g>`;
+  const full = days.filter(x => x.i <= D.C && x.p + x.m > 0), avg = full.length ? sum(full.map(x => x.p + x.m)) / full.length : 0;
+  const peak = Math.max(...days.map(x => x.p + x.m), 1), p10 = 10 ** Math.floor(Math.log10(peak)), mx = Math.ceil(peak / p10 * 2) / 2 * p10;
+  const W = 640, H = 300, pl = 46, pb = 22, pt = 10, iw = W - pl - 6, ih = H - pb - pt, bw = iw / D.dim, Y = v => pt + ih - v / mx * ih;
+  const grid = [0, 1, 2, 3, 4].map(k => `<line class="ax" x1="${pl}" x2="${W}" y1="${Y(mx * k / 4)}" y2="${Y(mx * k / 4)}"/><text x="${pl - 6}" y="${Y(mx * k / 4) + 4}" text-anchor="end" font-size="10.5" fill="var(--mu)">${jt(mx * k / 4)}</text>`).join('');
+  const cols = days.map(x => {
+    const X = pl + (x.i - 1) * bw, hp = x.p / mx * ih, hm = x.m / mx * ih, op = x.i > D.C ? .4 : 1;
+    return `<rect class="hl" data-day="${x.i}" x="${X}" y="${pt}" width="${bw}" height="${ih}" rx="6"/><g opacity="${op}"><rect x="${X + 2}" y="${Y(x.p + x.m)}" width="${bw - 4}" height="${hm + hp}" rx="3" fill="var(--ac2)"/><rect x="${X + 2}" y="${pt + ih - hp}" width="${bw - 4}" height="${hp}" rx="3" fill="var(--ac)"/></g>`;
   }).join('');
-  const lb = [1, 5, 10, 15, 20, 25, D.dim].filter((v, i, a) => a.indexOf(v) === i && v <= D.dim)
-    .map(v => `<text x="${(v - .5) * bw}" y="${H + 14}" text-anchor="middle" font-size="11" fill="var(--mu)">${v}</text>`).join('');
-  $('#pm').innerHTML = `<div class="two"><div><div class="mut">Pusat</div><div class="big">${rp(p)}</div><div class="mut">${pf(share(p, D.total))} dari total</div></div><div><div class="mut">Mitra</div><div class="big">${rp(m)}</div><div class="mut">${pf(share(m, D.total))} dari total</div></div></div>
+  const hits = days.map(x => `<rect class="hit" data-day="${x.i}" x="${pl + (x.i - 1) * bw}" y="${pt}" width="${bw}" height="${ih}"/>`).join('');
+  const lb = [1, 5, 10, 15, 20, 25, D.dim].filter((v, i, a) => a.indexOf(v) === i && v <= D.dim).map(v => `<text x="${pl + (v - .5) * bw}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--mu)">${v}</text>`).join('');
+  const avgL = avg ? `<line x1="${pl}" x2="${W}" y1="${Y(avg)}" y2="${Y(avg)}" stroke="var(--wa)" stroke-width="1.2" stroke-dasharray="5 4"/><text x="${W}" y="${Y(avg) - 5}" text-anchor="end" font-size="10.5" fill="var(--wa)">rata-rata ${jt(avg)}</text>` : '';
+
+  $('#pm').innerHTML = `<div class="two"><div><div class="mut">Pusat</div><div class="big">${jt(p)}</div><div class="mut">${pf(share(p, D.total))} dari total</div></div><div><div class="mut">Mitra</div><div class="big">${jt(m)}</div><div class="mut">${pf(share(m, D.total))} dari total</div></div></div>
   <div class="split" role="img" aria-label="Komposisi pusat dan mitra"><i style="width:${share(p, D.total)}%;background:var(--ac)"></i><i style="width:${share(m, D.total)}%;background:var(--ac2)"></i></div>
-  <div class="leg"><span><span class="dot" style="background:var(--ac)"></span>Pusat</span><span><span class="dot" style="background:var(--ac2)"></span>Mitra</span></div>`;
-  $('#daily').innerHTML = `<div class="sub" style="margin:16px 0 6px">Omset harian${D.C < D.N ? ' · batang pudar: data outlet belum lengkap' : ''}</div><svg viewBox="0 0 ${W} ${H + 20}" width="100%" role="img" aria-label="Omset harian">${bars}${lb}</svg>`;
+  <div class="leg"><span><span class="dot" style="background:var(--ac)"></span>${rp(p)}</span><span><span class="dot" style="background:var(--ac2)"></span>${rp(m)}</span></div>
+  <div class="dd" id="dd"></div>`;
+  $('#daily').innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Omset harian pusat dan mitra">${grid}${avgL}${cols}${lb}${hits}</svg>${D.C < D.N ? '<div class="sub">Batang pudar: data outlet belum lengkap</div>' : ''}`;
+
+  const svg = $('#daily svg');
+  let pin = D.N;
+  const show = i => {
+    $('#dd').innerHTML = dayDetail(days[i - 1]);
+    svg.querySelectorAll('.hl').forEach(h => h.classList.toggle('on', +h.dataset.day === i));
+  };
+  svg.querySelectorAll('.hit').forEach(h => {
+    const i = +h.dataset.day, x = days[i - 1];
+    h.onpointerenter = h.onpointermove = e => { show(i); tip(e, `<b>Tanggal ${i}</b><br>${rp(x.p + x.m)}`); };
+    h.onpointerleave = () => { show(pin); tip(null); };
+    h.onclick = () => { pin = pin === i ? D.N : i; show(pin); };
+  });
+  show(pin);
 }
 
 function kat() {
   const rs = grp(D.rows, S.kat), v = chan(rs), tot = sum(v), all = sum(chan(D.rows));
   const items = K.map((l, i) => ({ l, v: v[i], c: KC[i] }));
-  const off = sum(OFFLINE.map(i => v[i]));
-  const showAll = S.kat !== 'ALL';
-  $('#kat').innerHTML = `<div class="row"><div>${donut(items, [S.kat === 'ALL' ? 'Semua outlet' : S.kat === 'PUSAT' ? 'Pusat' : 'Mitra', jt(tot)])}</div>
-  <div class="grow scroll"><table><thead><tr><th>Kategori</th><th>Omset</th><th>% dalam ${S.kat === 'ALL' ? 'total' : 'kelompok'}</th>${showAll ? '<th>% thd total omset</th>' : ''}</tr></thead><tbody>${items.map(i => `<tr><td><span class="dot" style="background:${i.c}"></span>${i.l}</td><td>${rp(i.v)}</td><td>${pf(share(i.v, tot), 2)}</td>${showAll ? `<td>${pf(share(i.v, all), 2)}</td>` : ''}</tr>`).join('')}<tr><td><b>Total</b></td><td><b>${rp(tot)}</b></td><td><b>${tot ? '100,00%' : '–'}</b></td>${showAll ? `<td><b>${pf(share(tot, all), 2)}</b></td>` : ''}</tr></tbody></table>
+  const off = sum(OFFLINE.map(i => v[i])), showAll = S.kat !== 'ALL';
+  const name = S.kat === 'ALL' ? 'Semua outlet' : S.kat === 'PUSAT' ? 'Pusat' : 'Mitra';
+  $('#kat').innerHTML = `<div class="row"><div>${donut(items, name)}</div>
+  <div class="grow scroll"><table><thead><tr><th>Kategori</th><th>Omset</th><th>% dalam ${showAll ? 'kelompok' : 'total'}</th>${showAll ? '<th>% thd total omset</th>' : ''}<th class="t"> </th></tr></thead><tbody>${items.map((i, n) => `<tr data-i="${n}"><td><span class="dot" style="background:${i.c}"></span>${i.l}</td><td>${rp(i.v)}</td><td>${pf(share(i.v, tot), 2)}</td>${showAll ? `<td>${pf(share(i.v, all), 2)}</td>` : ''}<td class="t"><div class="bar"><i style="width:${share(i.v, tot)}%;background:${i.c}"></i></div></td></tr>`).join('')}<tr><td><b>Total</b></td><td><b>${rp(tot)}</b></td><td><b>${tot ? '100,00%' : '–'}</b></td>${showAll ? `<td><b>${pf(share(tot, all), 2)}</b></td>` : ''}<td></td></tr></tbody></table>
   <div class="sub" style="margin-top:8px">Offline (Dine In + Take Away) ${pf(share(off, tot))} · Online dan delivery ${pf(share(tot - off, tot))}</div></div></div>`;
+  bindDonut('#kat', items, [name, jt(tot)]);
 }
 
 function rank() {
@@ -267,7 +380,7 @@ function rank() {
   const hasMitraTarget = D.os.some(o => o.j === 'MITRA' && o.tg > 0);
   $('#rank').innerHTML = `<div class="scroll"><table><thead><tr><th>#</th><th class="t">Outlet</th><th>Omset</th><th class="t"> </th><th>Hari ada data</th><th>Rata-rata/hari</th><th>Kontribusi</th><th>Target bulanan</th><th>Capaian</th></tr></thead><tbody>${list.map((o, i) => {
     const cp = o.tg ? share(o.t, o.tg) : null;
-    return `<tr><td>${i + 1}</td><td class="t">${esc(o.n)} <span class="tag">${o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${o.dd ? rp(o.t) : '<span class="mut">Belum ada data</span>'}</td><td class="t"><div class="bar"><i style="width:${o.t / mx * 100}%"></i></div></td><td>${o.dd}</td><td>${o.dd ? rp(o.avg) : '–'}</td><td>${o.dd ? pf(share(o.t, tot)) : '–'}</td><td>${o.tg ? rp(o.tg) : '–'}</td><td>${cp === null ? '–' : `<span class="${cp >= 100 ? 'up' : ''}">${pf(cp)}</span>`}</td></tr>`;
+    return `<tr><td><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span></td><td class="t">${esc(o.n)} <span class="tag">${o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${o.dd ? rp(o.t) : '<span class="mut">Belum ada data</span>'}</td><td class="t"><div class="bar"><i style="width:${o.t / mx * 100}%"></i></div></td><td>${o.dd}</td><td>${o.dd ? rp(o.avg) : '–'}</td><td>${o.dd ? pf(share(o.t, tot)) : '–'}</td><td>${o.tg ? rp(o.tg) : '–'}</td><td>${cp === null ? '–' : `<span class="${cp >= 100 ? 'up' : ''}">${pf(cp)}</span>`}</td></tr>`;
   }).join('')}</tbody></table></div>${hasMitraTarget ? '' : '<div class="sub" style="margin-top:8px">Target mitra belum diisi. Isi di tab TARGET MITRA pada spreadsheet.</div>'}`;
 }
 
@@ -348,8 +461,13 @@ function stat(ok, msg) {
   el.className = 'stat' + (ok ? '' : ' err');
   el.lastChild.textContent = ok ? 'Diperbarui ' + new Date().toLocaleTimeString('id-ID') : msg;
 }
+let busy = false;
 async function load() {
   if (API_URL.indexOf('http') !== 0) { stat(false, 'URL web app belum diisi di index.html'); return; }
+  if (busy) return;
+  busy = true;
+  const t0 = Date.now();
+  document.body.classList.add('loading');
   try {
     const q = (TOKEN ? 'token=' + encodeURIComponent(TOKEN) + '&' : '') + 't=' + Date.now();
     const res = await fetch(API_URL + (API_URL.includes('?') ? '&' : '?') + q);
@@ -360,14 +478,24 @@ async function load() {
       D = prep(j); raw = txt; render();
     }
     stat(true);
-  } catch (e) { stat(false, 'Gagal memuat: ' + e.message); }
+  } catch (e) {
+    stat(false, 'Gagal memuat: ' + e.message);
+  } finally {
+    busy = false;
+    setTimeout(() => document.body.classList.remove('loading'), Math.max(0, 800 - (Date.now() - t0)));
+  }
 }
 
 /* ---------- interaksi ---------- */
 const safe = f => { try { return f(); } catch (e) { return null; } };
+const ICON = {
+  light: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  dark: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
+};
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
-  $('#theme').textContent = t === 'dark' ? 'Mode cerah' : 'Mode gelap';
+  $('#theme svg').innerHTML = ICON[t];
+  $('#theme').title = t === 'dark' ? 'Mode cerah' : 'Mode gelap';
   safe(() => localStorage.setItem('theme', t));
 }
 setTheme(safe(() => localStorage.getItem('theme')) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
