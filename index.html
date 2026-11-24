@@ -127,6 +127,15 @@ html.lenis,html.lenis body{height:auto}
 .card:not(.sk):hover{border-color:var(--ac);box-shadow:0 18px 48px rgba(11,122,138,.2),inset 0 1px 0 var(--hi)}
 .hl{transition:opacity .15s}
 .bar i{transition:width .5s cubic-bezier(.22,1,.36,1)}
+
+.per{display:inline-flex;align-items:center;gap:7px;margin:8px 0 2px;padding:5px 13px;border-radius:99px;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 4px 14px rgba(37,99,235,.25)}
+.per .ico{width:14px;height:14px}
+.xp{display:inline-grid;place-items:center;width:24px;height:24px;padding:0;margin-right:8px;border-radius:50%;vertical-align:middle}
+.chev{width:14px;height:14px;transition:transform .25s}
+.xp[aria-expanded=true] .chev{transform:rotate(180deg)}
+.dt td{background:var(--tr);padding:14px}
+.dtg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 22px;white-space:normal}
+.dth{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;margin-bottom:5px}
 </style>
 </head>
 <body>
@@ -213,7 +222,7 @@ const MON = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Ag
 const sign = x => (x > 0 ? '+' : '') + pf(x);
 
 let D = null, raw = '';
-const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan' };
+const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan', open: new Set() };
 
 /* ---------- data ---------- */
 function prep(r) {
@@ -343,17 +352,24 @@ const spark = (a, c) => {
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,${h} ${pts} ${w},${h}" fill="${c}" opacity=".18"/><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>`;
 };
 const series = j => Array.from({ length: D.N }, (_, i) => sum(grp(D.rows, j).filter(x => x.day === i + 1).map(x => x.t)));
+const CAL = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+function periode(rs) {
+  if (!rs.length) return 'Belum ada data';
+  const d = rs.map(x => x.day), a = Math.min(...d), b = Math.max(...d);
+  return `Periode ${a === b ? a : a + '–' + b} ${MON[D.M - 1]} ${D.Y}`;
+}
 function kpi() {
+  const P = grp(D.rows, 'PUSAT'), Mi = grp(D.rows, 'MITRA');
   const p = sum(grp(D.os, 'PUSAT').map(o => o.t)), m = sum(grp(D.os, 'MITRA').map(o => o.t));
   const avg = D.N ? D.total / D.N : 0;
   const nP = grp(D.os, 'PUSAT').length, nM = grp(D.os, 'MITRA').length;
   const c = [
-    ['Total omset', rp(D.total), `Rata-rata ${rp(avg)} per hari`, spark(series('ALL'), 'var(--ac)')],
-    ['Omset pusat', rp(p), `${pf(share(p, D.total))} dari total · ${nP} outlet`, spark(series('PUSAT'), 'var(--ac)')],
-    ['Omset mitra', rp(m), `${pf(share(m, D.total))} dari total · ${nM} outlet`, spark(series('MITRA'), 'var(--ac2)')],
-    ['Proyeksi akhir bulan', rp(avg * D.dim), `Rata-rata per hari × ${D.dim} hari · hari ke-${D.N}`, `<div class="bar" title="Hari berjalan"><i style="width:${share(D.N, D.dim)}%"></i></div>`]
+    ['Total omset', periode(D.rows), rp(D.total), `Rata-rata ${rp(avg)} per hari`, spark(series('ALL'), 'var(--ac)')],
+    ['Omset pusat', periode(P), rp(p), `${pf(share(p, D.total))} dari total · ${nP} outlet`, spark(series('PUSAT'), 'var(--ac)')],
+    ['Omset mitra', periode(Mi), rp(m), `${pf(share(m, D.total))} dari total · ${nM} outlet`, spark(series('MITRA'), 'var(--ac2)')],
+    ['Proyeksi akhir bulan', `Hari ke-${D.N} dari ${D.dim}`, rp(avg * D.dim), `Rata-rata per hari × ${D.dim} hari`, `<div class="bar" title="Hari berjalan"><i style="width:${share(D.N, D.dim)}%"></i></div>`]
   ];
-  $('#kpi').innerHTML = c.map(x => `<div class="card kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div>${x[3]}</div>`).join('');
+  $('#kpi').innerHTML = c.map(x => `<div class="card kpi"><div class="l">${x[0]}</div><div class="per">${CAL}${x[1]}</div><div class="v">${x[2]}</div><div class="n">${x[3]}</div>${x[4]}</div>`).join('');
 }
 
 function dayDetail(x) {
@@ -422,10 +438,12 @@ function rank() {
   const none = all.length - list.length, tot = sum(list.map(o => o.t)), mx = list.length ? list[0].t : 1;
   const hasMitraTarget = D.os.some(o => o.j === 'MITRA' && o.tg > 0);
   const head = '<thead><tr><th>#</th><th class="t">Outlet</th><th>Omset</th><th class="t"> </th><th>Hari ada data</th><th>Rata-rata/hari</th><th>Kontribusi</th><th>Target bulanan</th><th>Capaian</th></tr></thead>';
-  const row = (o, i) => {
+  const row0 = (o, i) => {
     const cp = o.tg ? share(o.t, o.tg) : null;
-    return `<tr><td><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span></td><td class="t">${esc(o.n)} <span class="tag">${o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${rp(o.t)}</td><td class="t"><div class="bar"><i style="width:${o.t / mx * 100}%"></i></div></td><td>${o.dd}</td><td>${rp(o.avg)}</td><td>${pf(share(o.t, tot))}</td><td>${o.tg ? rp(o.tg) : '–'}</td><td>${cp === null ? '–' : `<span class="${cp >= 100 ? 'up' : ''}">${pf(cp)}</span>`}</td></tr>`;
+    return `<tr><td><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span></td><td class="t"><button class="xp" type="button" data-o="${esc(o.n)}" aria-expanded="${S.open.has(o.n)}" aria-label="Rincian kategori ${esc(o.n)}"><svg class="ico chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>${esc(o.n)} <span class="tag">${o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${rp(o.t)}</td><td class="t"><div class="bar"><i style="width:${o.t / mx * 100}%"></i></div></td><td>${o.dd}</td><td>${rp(o.avg)}</td><td>${pf(share(o.t, tot))}</td><td>${o.tg ? rp(o.tg) : '–'}</td><td>${cp === null ? '–' : `<span class="${cp >= 100 ? 'up' : ''}">${pf(cp)}</span>`}</td></tr>`;
   };
+  const det = o => `<tr class="dt"${S.open.has(o.n) ? '' : ' hidden'}><td colspan="9"><div class="dtg">${K.map((l, k) => `<div><div class="dth"><span><span class="dot" style="background:${KC[k]}"></span>${l}</span><b>${rp(o.v[k])}</b></div><div class="bar"><i style="width:${share(o.v[k], o.t)}%;background:${KC[k]}"></i></div><div class="sub">${pf(share(o.v[k], o.t), 2)} dari omset outlet</div></div>`).join('')}</div></td></tr>`;
+  const row = (o, i) => row0(o, i) + det(o);
   const top = list.slice(0, 10), bot = list.length > 10 ? list.slice(Math.max(10, list.length - 10)) : [];
   const tbl = (title, a, off) => `<div class="rk-h">${title}</div><div class="scroll"><table>${head}<tbody>${a.map((o, i) => row(o, off + i)).join('')}</tbody></table></div>`;
   const notes = [none ? `${none} outlet belum ada data dan tidak ikut peringkat.` : '', hasMitraTarget ? '' : 'Target mitra belum diisi. Isi di tab TARGET MITRA pada spreadsheet.'].filter(Boolean);
@@ -577,6 +595,15 @@ $('#theme').onclick = () => setTheme(document.documentElement.dataset.theme === 
 $('#refresh').onclick = load;
 $('#selKat').onchange = e => { S.kat = e.target.value; if (D) kat(); };
 $('#selRank').onchange = e => { S.rank = e.target.value; if (D) rank(); };
+$('#rank').addEventListener('click', e => {
+  const b = e.target.closest('.xp');
+  if (!b) return;
+  const n = b.dataset.o, dt = b.closest('tr').nextElementSibling, open = !S.open.has(n);
+  if (open) S.open.add(n); else S.open.delete(n);
+  b.setAttribute('aria-expanded', open);
+  dt.hidden = !open;
+  if (open && MOTION) M.animate(dt.firstChild.firstChild, { opacity: [0, 1], y: [-6, 0] }, { duration: .3 });
+});
 $('#selCmp').onchange = e => { S.cmp = e.target.value; if (D) cmp(); };
 $('#selOc').onchange = e => { S.oc = e.target.value; if (D) oc(); };
 $('#selOs').onchange = e => { S.os = e.target.value; if (D) oc(); };
