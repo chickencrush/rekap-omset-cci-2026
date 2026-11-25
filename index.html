@@ -174,7 +174,7 @@ html.lenis,html.lenis body{height:auto}
 <div class="grid g4" id="kpi"><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div></div>
 
 <section class="card mb">
-  <div class="sec-h"><h2>Total Sales Weekly</h2><span class="sub">Week 1 (tanggal 1–7) dibanding Week 2 (tanggal 8–14)</span></div>
+  <div class="sec-h"><h2>Total Sales Weekly</h2><select id="selWk" aria-label="Kelompok outlet"><option value="ALL">Semua</option><option value="PUSAT">Pusat</option><option value="MITRA">Mitra</option></select></div>
   <div id="wk"></div>
 </section>
 
@@ -185,9 +185,9 @@ html.lenis,html.lenis body{height:auto}
 </section>
 
 <section class="card mb">
-  <div class="sec-h"><h2>Top 3 outlet per kategori</h2><span class="sub">Pilih kategori untuk melihat 3 outlet tertinggi per week</span></div>
-  <div class="seg tabs" id="tcTabs" role="tablist"><button type="button" data-c="0" class="on">Offline</button><button type="button" data-c="1">ESB Order</button><button type="button" data-c="2">GoFood</button><button type="button" data-c="3">GrabFood</button><button type="button" data-c="4">ShopeeFood</button></div>
-  <div id="tc"></div>
+  <div class="sec-h"><h2>TOP KATEGORI PENJUALAN</h2>
+    <select id="selTk" aria-label="Kelompok outlet"><option value="ALL">Semua</option><option value="PUSAT">Pusat</option><option value="MITRA">Mitra</option></select></div>
+  <div id="tk"></div>
 </section>
 
 <section class="card" style="margin-bottom:14px">
@@ -199,7 +199,7 @@ html.lenis,html.lenis body{height:auto}
 <section class="card mb">
   <div class="sec-h"><h2>Perbandingan per outlet</h2><div class="tools">
     <select id="selOc" aria-label="Kelompok outlet"><option value="ALL">Semua</option><option value="PUSAT">Pusat</option><option value="MITRA">Mitra</option></select>
-    <select id="selOs" aria-label="Urutan"><option value="omset">Urut omset</option><option value="pct">Urut selisih %</option></select></div></div>
+    <select id="selOs" aria-label="Urutan"><option value="omset">Urut omset</option><option value="pct">Urut growth</option></select></div></div>
   <div id="oc"></div>
 </section>
 
@@ -246,7 +246,7 @@ const MON = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Ag
 const sign = x => (x > 0 ? '+' : '') + pf(x);
 
 let D = null, raw = '';
-const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan', open: new Set(), tc: 0 };
+const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan', open: new Set(), wk: 'ALL', tk: 'ALL' };
 
 /* ---------- data ---------- */
 function prep(r) {
@@ -356,10 +356,10 @@ function render() {
   $('#periode').textContent = `${MON[d.M - 1]} ${d.Y}` + (d.N ? ` · data sampai tanggal ${d.N}` : ' · belum ada data');
   if (!d.rows.length) {
     $('#banner').innerHTML = '<div class="banner"><b>Belum ada data omset</b> untuk bulan laporan ini. Isi sheet INPUT OMSET.</div>';
-    ['#kpi', '#wk', '#tc', '#kat', '#rank', '#oc', '#cmp', '#menu', '#ins'].forEach(s => { $(s).innerHTML = ''; });
+    ['#kpi', '#wk', '#tk', '#kat', '#rank', '#oc', '#cmp', '#menu', '#ins'].forEach(s => { $(s).innerHTML = ''; });
     return;
   }
-  $('#banner').innerHTML = ''; kpi(); wk(); kat(); tc(); rank(); oc(); cmp(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
+  $('#banner').innerHTML = ''; kpi(); wk(); kat(); tk(); rank(); oc(); cmp(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
   reveal();
 }
 
@@ -397,15 +397,17 @@ const gro = (a, b) => b ? share(a - b, b) : null;
 const gtag = g => g === null ? '<span class="mut">–</span>' : arrow(g);
 
 function wk() {
+  const G = grp(D.rows, S.wk);
   const W = WK.map((r, w) => {
-    const rs = D.rows.filter(x => inW(x, w)), t = sum(rs.map(x => x.t)), ds = new Set(rs.map(x => x.day)).size;
+    const rs = G.filter(x => inW(x, w)), t = sum(rs.map(x => x.t)), ds = new Set(rs.map(x => x.day)).size;
     return { w, t, ds, avg: ds ? t / ds : 0, p: sum(rs.filter(x => x.j === 'PUSAT').map(x => x.t)), v: chan(rs), part: WK[w][1] > D.C };
   });
   const card = x => `<div class="wc"><div class="mut">Week ${x.w + 1} · tanggal ${WK[x.w][0]}–${WK[x.w][1]}${x.part && x.ds ? ' <span class="tag">data belum lengkap</span>' : ''}</div>
     <div class="big">${x.ds ? rp(x.t) : 'Belum ada data'}</div>
-    ${x.ds ? `<div class="sub">Rata-rata ${rp(x.avg)} per hari · ${x.ds} hari data</div><div class="sub">Pusat ${rp(x.p)} · Mitra ${rp(x.t - x.p)}</div>` : ''}</div>`;
+    ${x.ds ? `<div class="sub">Rata-rata ${rp(x.avg)} per hari · ${x.ds} hari data</div>${S.wk === 'ALL' ? `<div class="sub">Pusat ${rp(x.p)} · Mitra ${rp(x.t - x.p)}</div>` : ''}` : ''}</div>`;
   const g = gro(W[1].t, W[0].t), diff = W[1].t - W[0].t;
-  const items = [['Total', W[0].t, W[1].t], ['Pusat', W[0].p, W[1].p], ['Mitra', W[0].t - W[0].p, W[1].t - W[1].p]]
+  const items = [['Total', W[0].t, W[1].t]]
+    .concat(S.wk === 'ALL' ? [['Pusat', W[0].p, W[1].p], ['Mitra', W[0].t - W[0].p, W[1].t - W[1].p]] : [])
     .concat(CATS.map(c => [c.n, sum(c.ch.map(i => W[0].v[i])), sum(c.ch.map(i => W[1].v[i]))]));
   $('#wk').innerHTML = `<div class="wk">${card(W[0])}<div class="wg"><div class="mut">Growth Week 2 vs Week 1</div><div class="big">${gtag(g)}</div>${g === null ? '' : `<div class="sub">${diff >= 0 ? '+' : '-'}${rp(Math.abs(diff))}</div>`}</div>${card(W[1])}</div>
   <div class="scroll wt"><table><thead><tr><th>Perbandingan</th><th>Week 1</th><th>Week 2</th><th>Selisih</th><th>Growth</th><th class="t"> </th></tr></thead><tbody>${items.map(([n, a, b]) => { const m = Math.max(a, b, 1); return `<tr><td>${n}</td><td>${rp(a)}</td><td>${rp(b)}</td><td><span class="${b - a >= 0 ? 'up' : 'dn'}">${b - a >= 0 ? '+' : '-'}${rp(Math.abs(b - a))}</span></td><td>${gtag(gro(b, a))}</td><td class="t"><div class="bar2"><i style="width:${a / m * 100}%;background:var(--ac)"></i><i style="width:${b / m * 100}%;background:var(--ac2)"></i></div></td></tr>`; }).join('')}</tbody></table></div>
@@ -413,18 +415,12 @@ function wk() {
   pop('#wk');
 }
 
-function tc() {
-  const c = CATS[S.tc];
-  document.querySelectorAll('#tcTabs button').forEach(b => b.classList.toggle('on', +b.dataset.c === S.tc));
-  const val = (o, w) => sum(D.rows.filter(x => x.o === o.n && inW(x, w)).map(x => sum(c.ch.map(i => x.v[i]))));
-  const list = D.os.map(o => ({ o, v: [val(o, 0), val(o, 1)] }));
-  const tot = [0, 1].map(w => sum(list.map(x => x.v[w])));
-  const col = w => {
-    const top = list.filter(x => x.v[w] > 0).sort((a, b) => b.v[w] - a.v[w]).slice(0, 3), mx = top.length ? top[0].v[w] : 1;
-    return `<div><div class="dth"><b>Week ${w + 1}</b><span class="mut">tanggal ${WK[w][0]}–${WK[w][1]}</span></div><div class="mut" style="margin-bottom:10px">Total ${c.n} ${rp(tot[w])}</div>${top.length ? `<ul class="tcl">${top.map((x, i) => `<li><span class="rk r${i + 1}">${i + 1}</span><div class="grow"><div class="dth"><span>${esc(x.o.n)} <span class="tag">${x.o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></span><b>${rp(x.v[w])}</b></div><div class="bar"><i style="width:${x.v[w] / mx * 100}%"></i></div><div class="sub">Week ${2 - w}: ${rp(x.v[1 - w])} · Growth ${gtag(gro(x.v[1], x.v[0]))}</div></div></li>`).join('')}</ul>` : '<div class="empty">Belum ada data.</div>'}</div>`;
-  };
-  $('#tc').innerHTML = `<div class="sub" style="margin-bottom:12px">Growth ${c.n} (Week 2 vs Week 1): ${gtag(gro(tot[1], tot[0]))}${c.n === 'Offline' ? ' · Dine In + Take Away digabung' : ''}</div><div class="two">${col(0)}${col(1)}</div>`;
-  pop('#tc');
+function tk() {
+  const v = chan(grp(D.rows, S.tk));
+  const list = CATS.map(c => ({ n: c.n, t: sum(c.ch.map(i => v[i])) })).sort((a, b) => b.t - a.t);
+  const tot = sum(list.map(x => x.t)), mx = list[0].t || 1;
+  $('#tk').innerHTML = tot ? `<ul class="tcl">${list.map((x, i) => `<li><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><div class="grow"><div class="dth"><span>${x.n}${x.n === 'Offline' ? ' <span class="tag">Dine In + Take Away</span>' : ''}</span><b>${rp(x.t)}</b></div><div class="bar" title="${esc(x.n)}: ${rp(x.t)}"><i style="width:${x.t / mx * 100}%"></i></div><div class="sub">${pf(share(x.t, tot), 2)} dari total kategori</div></div></li>`).join('')}</ul>` : '<div class="empty">Belum ada data.</div>';
+  pop('#tk');
 }
 
 function kat() {
@@ -492,7 +488,7 @@ function oc() {
   const ok = rows.filter(r => r.pct !== null), up = ok.filter(r => r.pct >= 0).length;
   const est = rows.some(r => r.basis === 'Estimasi');
   $('#oc').innerHTML = `<div class="sub" style="margin-bottom:8px">${up} outlet naik, ${ok.length - up} turun, ${rows.length - ok.length} belum punya pembanding bulan lalu. Rentang dibandingkan: tanggal 1 sampai tanggal input terakhir tiap outlet.</div>
-  <div class="scroll"><table><thead><tr><th class="t">Outlet</th><th>Data sampai</th><th>Bulan ini</th><th>Bulan lalu (periode sama)</th><th>Selisih</th><th>Selisih %</th><th>Dasar</th></tr></thead><tbody>${rows.map(r => `<tr><td class="t">${esc(r.o.n)} <span class="tag">${r.o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${r.o.last} ${MON[D.M - 1].slice(0, 3)}</td><td>${rp(r.o.t)}</td><td>${r.prev === null ? '–' : rp(r.prev)}</td><td>${r.diff === null ? '–' : `<span class="${r.diff >= 0 ? 'up' : 'dn'}">${r.diff >= 0 ? '+' : '-'}${rp(Math.abs(r.diff))}</span>`}</td><td>${r.pct === null ? '–' : arrow(r.pct)}</td><td class="mut">${r.basis || '–'}</td></tr>`).join('')}</tbody></table></div>
+  <div class="scroll"><table><thead><tr><th class="t">Outlet</th><th>Data sampai</th><th>Bulan ini</th><th>Bulan lalu (periode sama)</th><th>Selisih</th><th>Growth</th><th>Dasar</th></tr></thead><tbody>${rows.map(r => `<tr><td class="t">${esc(r.o.n)} <span class="tag">${r.o.j === 'PUSAT' ? 'Pusat' : 'Mitra'}</span></td><td>${r.o.last} ${MON[D.M - 1].slice(0, 3)}</td><td>${rp(r.o.t)}</td><td>${r.prev === null ? '–' : rp(r.prev)}</td><td>${r.diff === null ? '–' : `<span class="${r.diff >= 0 ? 'up' : 'dn'}">${r.diff >= 0 ? '+' : '-'}${rp(Math.abs(r.diff))}</span>`}</td><td>${r.pct === null ? '–' : arrow(r.pct)}</td><td class="mut">${r.basis || '–'}</td></tr>`).join('')}</tbody></table></div>
   <div class="sub" style="margin-top:8px">${est ? 'Estimasi = omset bulan lalu ÷ jumlah hari bulan lalu × jumlah hari data. ' : ''}${ok.length < rows.length ? 'Isi OMSET BLN LALU (kolom AJ di INPUT OMSET) atau arsipkan bulan lalu agar semua outlet punya pembanding.' : ''}</div>`;
   pop('#oc');
 }
@@ -525,8 +521,6 @@ function analisa() {
   L.push({ k: 'info', t: `Total omset <b>${rp(d.total)}</b> sampai tanggal ${d.N}. Pusat ${pf(share(p, d.total))}, mitra ${pf(share(d.total - p, d.total))}.` });
   const v = chan(d.rows), idx = v.map((x, i) => i).sort((a, b) => v[b] - v[a]), off = sum(OFFLINE.map(i => v[i]));
   L.push({ k: 'info', t: `<b>${K[idx[0]]}</b> kanal terbesar (${pf(share(v[idx[0]], d.total))}), disusul ${K[idx[1]]} (${pf(share(v[idx[1]], d.total))}). Offline ${pf(share(off, d.total))}, online dan delivery ${pf(share(d.total - off, d.total))}.` });
-  const zero = K.filter((_, i) => v[i] === 0);
-  if (zero.length) L.push({ k: 'warn', t: `${zero.join(', ')} belum mencatat omset pada periode ini. Pastikan memang belum ada transaksi, bukan belum diinput.` });
   const top = d.os.slice().sort((a, b) => b.t - a.t).slice(0, 3);
   L.push({ k: 'info', t: `Tiga outlet teratas: ${top.map(o => `${esc(o.n)} (${pf(share(o.t, d.total))})`).join(', ')}, bersama ${pf(share(sum(top.map(o => o.t)), d.total))} dari total.` });
   const dt = {};
@@ -539,8 +533,6 @@ function analisa() {
     if (we.length && wd.length) { const a = sum(we.map(k => dt[k])) / we.length, b = sum(wd.map(k => dt[k])) / wd.length; t += ` Rata-rata akhir pekan ${rp(a)}, hari kerja ${rp(b)} (${sign(share(a - b, b))}).`; }
     L.push({ k: 'info', t });
   }
-  const none = d.os.filter(o => o.dd === 0).length, lag = d.os.filter(o => o.dd > 0 && o.last < d.N).length;
-  if (none + lag) L.push({ k: 'warn', t: `${none} outlet belum ada data dan ${lag} outlet tertinggal. Angka total, rata-rata harian, dan proyeksi memakai data yang masuk saja.` });
   const c = compare('ALL');
   if (c.mode !== 'none') L.push({ k: c.ct >= c.pt ? 'ok' : 'bad', t: `Dibanding bulan lalu pada tanggal 1–${d.C}: ${sign(share(c.ct - c.pt, c.pt))} (${rp(c.ct)} vs ${rp(c.pt)}${c.mode === 'est' ? ', estimasi' : ''}).` });
   const left = d.dim - d.N;
@@ -610,7 +602,8 @@ $('#rank').addEventListener('click', e => {
   dt.hidden = !open;
   if (open && MOTION) M.animate(dt.firstChild.firstChild, { opacity: [0, 1], y: [-6, 0] }, { duration: .3 });
 });
-document.querySelectorAll('#tcTabs button').forEach(b => { b.onclick = () => { S.tc = +b.dataset.c; if (D) tc(); }; });
+$('#selWk').onchange = e => { S.wk = e.target.value; if (D) wk(); };
+$('#selTk').onchange = e => { S.tk = e.target.value; if (D) tk(); };
 $('#selCmp').onchange = e => { S.cmp = e.target.value; if (D) cmp(); };
 $('#selOc').onchange = e => { S.oc = e.target.value; if (D) oc(); };
 $('#selOs').onchange = e => { S.os = e.target.value; if (D) oc(); };
