@@ -416,10 +416,14 @@ function wk() {
 }
 
 function tk() {
-  const v = chan(grp(D.rows, S.tk));
-  const list = CATS.map(c => ({ n: c.n, t: sum(c.ch.map(i => v[i])) })).sort((a, b) => b.t - a.t);
-  const tot = sum(list.map(x => x.t)), mx = list[0].t || 1;
-  $('#tk').innerHTML = tot ? `<ul class="tcl">${list.map((x, i) => `<li><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><div class="grow"><div class="dth"><span>${x.n}${x.n === 'Offline' ? ' <span class="tag">Dine In + Take Away</span>' : ''}</span><b>${rp(x.t)}</b></div><div class="bar" title="${esc(x.n)}: ${rp(x.t)}"><i style="width:${x.t / mx * 100}%"></i></div><div class="sub">${pf(share(x.t, tot), 2)} dari total kategori</div></div></li>`).join('')}</ul>` : '<div class="empty">Belum ada data.</div>';
+  const G = grp(D.rows, S.tk);
+  const vals = [0, 1].map(w => { const v = chan(G.filter(x => inW(x, w))); return CATS.map(c => sum(c.ch.map(i => v[i]))); });
+  const col = w => {
+    const list = CATS.map((c, n) => ({ n: c.n, t: vals[w][n], g: gro(vals[1][n], vals[0][n]) })).sort((a, b) => b.t - a.t);
+    const tot = sum(list.map(x => x.t)), mx = list[0].t || 1;
+    return `<div><div class="dth"><b>Week ${w + 1}</b><span class="mut">tanggal ${WK[w][0]}–${WK[w][1]}</span></div><div class="mut" style="margin-bottom:10px">Total ${rp(tot)}</div>${tot ? `<ul class="tcl">${list.map((x, i) => `<li><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><div class="grow"><div class="dth"><span>${x.n}${x.n === 'Offline' ? ' <span class="tag">Dine In + Take Away</span>' : ''}</span><b>${rp(x.t)}</b></div><div class="bar" title="${esc(x.n)}: ${rp(x.t)}"><i style="width:${x.t / mx * 100}%"></i></div><div class="sub">${pf(share(x.t, tot), 2)} dari total week · Growth ${gtag(x.g)}</div></div></li>`).join('')}</ul>` : '<div class="empty">Belum ada data.</div>'}</div>`;
+  };
+  $('#tk').innerHTML = `<div class="sub" style="margin-bottom:12px">Growth = Week 2 dibanding Week 1 pada kategori yang sama</div><div class="two">${col(0)}${col(1)}</div>`;
   pop('#tk');
 }
 
