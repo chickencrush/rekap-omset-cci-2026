@@ -204,11 +204,6 @@ html.lenis,html.lenis body{height:auto}
 </section>
 
 <div class="grid g2" style="grid-template-columns:1fr">
-  <section class="card">
-    <div class="sec-h"><h2>Bulan berjalan dan bulan sebelumnya</h2>
-      <select id="selCmp" aria-label="Kelompok outlet"><option value="ALL">Semua outlet</option><option value="PUSAT">Pusat</option><option value="MITRA">Mitra</option></select></div>
-    <div id="cmp"></div>
-  </section>
   <!-- Penjualan menu disembunyikan sementara. Hapus atribut hidden di bawah untuk menampilkan lagi, dan hapus style pada grid ini. -->
   <section class="card" hidden>
     <div class="sec-h"><h2>Menu tertinggi dan terendah</h2>
@@ -246,7 +241,7 @@ const MON = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Ag
 const sign = x => (x > 0 ? '+' : '') + pf(x);
 
 let D = null, raw = '';
-const S = { kat: 'ALL', rank: 'ALL', cmp: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan', open: new Set(), wk: 'ALL', tk: 'ALL' };
+const S = { kat: 'ALL', rank: 'ALL', menu: 'qty', oc: 'ALL', os: 'omset', mw: '', mk: 'Makanan', open: new Set(), wk: 'ALL', tk: 'ALL' };
 
 /* ---------- data ---------- */
 function prep(r) {
@@ -356,10 +351,10 @@ function render() {
   $('#periode').textContent = `${MON[d.M - 1]} ${d.Y}` + (d.N ? ` · data sampai tanggal ${d.N}` : ' · belum ada data');
   if (!d.rows.length) {
     $('#banner').innerHTML = '<div class="banner"><b>Belum ada data omset</b> untuk bulan laporan ini. Isi sheet INPUT OMSET.</div>';
-    ['#kpi', '#wk', '#tk', '#kat', '#rank', '#oc', '#cmp', '#menu', '#ins'].forEach(s => { $(s).innerHTML = ''; });
+    ['#kpi', '#wk', '#tk', '#kat', '#rank', '#oc', '#menu', '#ins'].forEach(s => { $(s).innerHTML = ''; });
     return;
   }
-  $('#banner').innerHTML = ''; kpi(); wk(); kat(); tk(); rank(); oc(); cmp(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
+  $('#banner').innerHTML = ''; kpi(); wk(); kat(); tk(); rank(); oc(); menu(); $('#ins').innerHTML = analisa().map(a => `<li class="${a.k}">${a.t}</li>`).join('');
   reveal();
 }
 
@@ -407,7 +402,6 @@ function wk() {
     ${x.ds ? `<div class="sub">Rata-rata ${rp(x.avg)} per hari · ${x.ds} hari data</div>${S.wk === 'ALL' ? `<div class="sub">Pusat ${rp(x.p)} · Mitra ${rp(x.t - x.p)}</div>` : ''}` : ''}</div>`;
   const g = gro(W[1].t, W[0].t), diff = W[1].t - W[0].t;
   const items = [['Total', W[0].t, W[1].t]]
-    .concat(S.wk === 'ALL' ? [['Pusat', W[0].p, W[1].p], ['Mitra', W[0].t - W[0].p, W[1].t - W[1].p]] : [])
     .concat(CATS.map(c => [c.n, sum(c.ch.map(i => W[0].v[i])), sum(c.ch.map(i => W[1].v[i]))]));
   $('#wk').innerHTML = `<div class="wk">${card(W[0])}<div class="wg"><div class="mut">Growth Week 2 vs Week 1</div><div class="big">${gtag(g)}</div>${g === null ? '' : `<div class="sub">${diff >= 0 ? '+' : '-'}${rp(Math.abs(diff))}</div>`}</div>${card(W[1])}</div>
   <div class="scroll wt"><table><thead><tr><th>Perbandingan</th><th>Week 1</th><th>Week 2</th><th>Selisih</th><th>Growth</th><th class="t"> </th></tr></thead><tbody>${items.map(([n, a, b]) => { const m = Math.max(a, b, 1); return `<tr><td>${n}</td><td>${rp(a)}</td><td>${rp(b)}</td><td><span class="${b - a >= 0 ? 'up' : 'dn'}">${b - a >= 0 ? '+' : '-'}${rp(Math.abs(b - a))}</span></td><td>${gtag(gro(b, a))}</td><td class="t"><div class="bar2"><i style="width:${a / m * 100}%;background:var(--ac)"></i><i style="width:${b / m * 100}%;background:var(--ac2)"></i></div></td></tr>`; }).join('')}</tbody></table></div>
@@ -466,17 +460,6 @@ function compare(j) {
   if (j === 'ALL') base = D.prevTotal;
   else if (j === 'PUSAT') base = sum(grp(D.os, 'PUSAT').map(o => o.prev));
   return base > 0 ? { mode: 'est', ct, pt: base / D.pdim * D.C, cv, base } : { mode: 'none', ct, cv };
-}
-
-function cmp() {
-  const c = compare(S.cmp), per = `tanggal 1–${D.C} ${MON[D.M - 1]}`;
-  if (c.mode === 'none') { $('#cmp').innerHTML = `<div class="empty">Data bulan sebelumnya untuk kelompok ini belum tersedia. Isi OMSET BLN LALU di INPUT OMSET, atau arsipkan data bulan lalu (lihat README).</div>`; return; }
-  const diff = c.ct - c.pt, p = share(diff, c.pt);
-  const rows = c.mode === 'arsip' ? `<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Kategori</th><th>Bulan ini</th><th>Bulan lalu</th><th>Perubahan</th></tr></thead><tbody>${K.map((l, i) => `<tr><td><span class="dot" style="background:${KC[i]}"></span>${l}</td><td>${rp(c.cv[i])}</td><td>${rp(c.pv[i])}</td><td>${c.pv[i] ? arrow(share(c.cv[i] - c.pv[i], c.pv[i])) : '–'}</td></tr>`).join('')}</tbody></table></div>` : '';
-  $('#cmp').innerHTML = `<div class="sub">Dibandingkan pada ${per}, saat data seluruh outlet aktif lengkap</div>
-  <div class="row" style="margin:8px 0"><div class="big">${arrow(p)}</div><div class="mut">${rp(Math.abs(diff))} ${diff >= 0 ? 'lebih tinggi' : 'lebih rendah'} dari bulan lalu</div></div>
-  <div class="two"><div><div class="mut">Bulan ini</div><b>${rp(c.ct)}</b></div><div><div class="mut">Bulan lalu${c.mode === 'est' ? ' (estimasi)' : ''}</div><b>${rp(c.pt)}</b></div></div>
-  ${c.mode === 'est' ? `<div class="sub" style="margin-top:8px">Estimasi dari omset total bulan lalu ${rp(c.base)} ÷ ${D.pdim} hari × ${D.C} hari. Untuk perbandingan per kategori, arsipkan data bulan lalu.</div>` : ''}${rows}`;
 }
 
 function oc() {
@@ -608,7 +591,6 @@ $('#rank').addEventListener('click', e => {
 });
 $('#selWk').onchange = e => { S.wk = e.target.value; if (D) wk(); };
 $('#selTk').onchange = e => { S.tk = e.target.value; if (D) tk(); };
-$('#selCmp').onchange = e => { S.cmp = e.target.value; if (D) cmp(); };
 $('#selOc').onchange = e => { S.oc = e.target.value; if (D) oc(); };
 $('#selOs').onchange = e => { S.os = e.target.value; if (D) oc(); };
 $('#selMW').onchange = e => { S.mw = e.target.value; if (D) menu(); };
